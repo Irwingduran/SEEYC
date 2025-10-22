@@ -4,12 +4,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSidebar } from "@/contexts/sidebar-context"
 import {
-  BookOpen,
-  BarChart3,
-  Home,
+  Shield,
   Users,
+  BookOpen,
+  DollarSign,
+  Brain,
   Settings,
-  Clock,
+  GraduationCap,
   Search,
   Bell,
   User,
@@ -21,12 +22,15 @@ import {
   Zap,
   Menu,
   X,
-  Trophy,
+  LayoutDashboard,
+  FileText,
+  Upload,
+  BarChart3,
+  Video,
+  MessageSquare,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -42,24 +46,44 @@ import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 
-const navigationItems = [
-  { icon: Home, label: "Dashboard", href: "/dashboard" },
-  { icon: BookOpen, label: "Mis Cursos", href: "/dashboard/courses" },
-  { icon: BarChart3, label: "Progreso", href: "/dashboard/progress" },
-  { icon: Users, label: "Comunidad", href: "/dashboard/community" },
-  { icon: Settings, label: "Configuración", href: "/dashboard/settings" },
+// Secciones de navegación agrupadas
+const navigationSections = [
+  {
+    title: "General",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+      { icon: BarChart3, label: "Analíticas", href: "/admin/analytics" },
+    ],
+  },
+  {
+    title: "Plataforma",
+    items: [
+      { icon: Users, label: "Usuarios", href: "/admin/users" },
+      { icon: BookOpen, label: "Contenido", href: "/admin/content" },
+      { icon: DollarSign, label: "Finanzas", href: "/admin/financial" },
+      { icon: Settings, label: "Configuración", href: "/admin/settings" },
+    ],
+  },
+  {
+    title: "Instructor",
+    items: [
+      { icon: GraduationCap, label: "Mis Cursos", href: "/admin/courses" },
+      { icon: Upload, label: "Crear Curso", href: "/admin/courses/create" },
+      { icon: FileText, label: "Recursos", href: "/admin/resources" },
+    ],
+  },
 ]
 
-export function DashboardSidebar() {
+export function AdminSidebar() {
   const { isCollapsed, isMobileOpen, toggleCollapse, toggleMobile } = useSidebar()
   const [searchQuery, setSearchQuery] = useState("")
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
 
   const notifications = [
-    { id: 1, title: "Nuevo curso disponible", message: "Instalaciones Solares Avanzadas", read: false, time: "2h" },
-    { id: 2, title: "Certificado listo", message: "Automatización Industrial completado", read: false, time: "1d" },
-    { id: 3, title: "Recordatorio", message: "Examen de Seguridad Eléctrica mañana", read: true, time: "2d" },
+    { id: 1, title: "Nuevo usuario registrado", message: "Juan Pérez se registró", read: false, time: "1h" },
+    { id: 2, title: "Curso publicado", message: "Automatización Industrial está activo", read: false, time: "3h" },
+    { id: 3, title: "Pago recibido", message: "Nuevo pago de $250", read: true, time: "1d" },
   ]
 
   const unreadCount = notifications.filter((n) => !n.read).length
@@ -91,12 +115,12 @@ export function DashboardSidebar() {
               {!isCollapsed ? (
                 <>
                   <Link href="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Zap className="h-5 w-5 text-white" />
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-bold text-sm leading-tight">Eléctricos</span>
-                      <span className="text-xs text-muted-foreground leading-tight">Especializados</span>
+                      <span className="font-bold text-sm leading-tight">Admin Panel</span>
+                      <span className="text-xs text-muted-foreground leading-tight">Gestión Total</span>
                     </div>
                   </Link>
                   <Button variant="ghost" size="icon" onClick={toggleCollapse} className="h-8 w-8 hidden lg:flex">
@@ -134,14 +158,21 @@ export function DashboardSidebar() {
             {!isCollapsed ? (
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/user-avatar.jpg" alt="Carlos Rodríguez" />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white">
-                    CR
+                  <AvatarImage src="/admin-avatar.jpg" alt="María González" />
+                  <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
+                    MG
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">Carlos Rodríguez</p>
-                  <p className="text-xs text-muted-foreground truncate">carlos@email.com</p>
+                  <p className="text-sm font-medium truncate">María González</p>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="secondary" className="text-xs h-4 px-1">
+                      Admin
+                    </Badge>
+                    <Badge variant="outline" className="text-xs h-4 px-1">
+                      Instructor
+                    </Badge>
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -153,13 +184,13 @@ export function DashboardSidebar() {
                     <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard/profile">
+                      <Link href="/admin/profile">
                         <User className="mr-2 h-4 w-4" />
                         Mi Perfil
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard/settings">
+                      <Link href="/admin/settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Configuración
                       </Link>
@@ -177,9 +208,9 @@ export function DashboardSidebar() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-10 w-10 mx-auto">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="/user-avatar.jpg" alt="Carlos Rodríguez" />
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-xs">
-                        CR
+                      <AvatarImage src="/admin-avatar.jpg" alt="María González" />
+                      <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xs">
+                        MG
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -187,19 +218,26 @@ export function DashboardSidebar() {
                 <DropdownMenuContent align="start" side="right" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">Carlos Rodríguez</p>
-                      <p className="text-xs text-muted-foreground">carlos@email.com</p>
+                      <p className="text-sm font-medium">María González</p>
+                      <div className="flex gap-1">
+                        <Badge variant="secondary" className="text-xs h-4">
+                          Admin
+                        </Badge>
+                        <Badge variant="outline" className="text-xs h-4">
+                          Instructor
+                        </Badge>
+                      </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard/profile">
+                    <Link href="/admin/profile">
                       <User className="mr-2 h-4 w-4" />
                       Mi Perfil
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings">
+                    <Link href="/admin/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       Configuración
                     </Link>
@@ -313,93 +351,39 @@ export function DashboardSidebar() {
 
               <Separator className="my-3" />
 
-              {/* Navigation Items */}
-              <nav className="space-y-1">
-                {navigationItems.map((item) => {
-                  const isActive = pathname === item.href
-                  return (
-                    <Button
-                      key={item.href}
-                      variant={isActive ? "default" : "ghost"}
-                      className={cn(
-                        "w-full justify-start",
-                        isCollapsed ? "h-10 w-10 p-0 mx-auto" : "h-9"
-                      )}
-                      size="sm"
-                      asChild
-                    >
-                      <Link href={item.href}>
-                        <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-                        {!isCollapsed && <span className="text-sm">{item.label}</span>}
-                      </Link>
-                    </Button>
-                  )
-                })}
-              </nav>
-
-              {/* Stats Section - Only when expanded */}
-              {!isCollapsed && (
-                <>
-                  <Separator className="my-4" />
-
-                  <Card className="border-0 bg-muted/50">
-                    <CardHeader className="pb-2 pt-3 px-3">
-                      <CardTitle className="text-xs font-medium">Progreso General</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 pb-3 px-3">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="text-muted-foreground">Cursos</span>
-                          <span className="font-medium">3/8</span>
-                        </div>
-                        <Progress value={37.5} className="h-1.5" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="text-muted-foreground">Horas</span>
-                          <span className="font-medium">45h</span>
-                        </div>
-                        <Progress value={75} className="h-1.5" />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="mt-3 border-0 bg-muted/50">
-                    <CardHeader className="pb-2 pt-3 px-3">
-                      <CardTitle className="text-xs font-medium">Stats Rápidas</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 pb-3 px-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-xs">Horas</span>
-                        </div>
-                        <Badge variant="secondary" className="text-xs h-5">
-                          45h
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <Trophy className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-xs">Certificados</span>
-                        </div>
-                        <Badge variant="secondary" className="text-xs h-5">
-                          3
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-xs">Racha</span>
-                        </div>
-                        <Badge variant="secondary" className="text-xs h-5">
-                          7d
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
+              {/* Navigation Items by Section */}
+              {navigationSections.map((section) => (
+                <div key={section.title} className="mb-4">
+                  {!isCollapsed && (
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
+                      {section.title}
+                    </h3>
+                  )}
+                  <nav className="space-y-1">
+                    {section.items.map((item) => {
+                      const isActive = pathname === item.href
+                      return (
+                        <Button
+                          key={item.href}
+                          variant={isActive ? "default" : "ghost"}
+                          className={cn(
+                            "w-full justify-start",
+                            isCollapsed ? "h-10 w-10 p-0 mx-auto" : "h-9"
+                          )}
+                          size="sm"
+                          asChild
+                        >
+                          <Link href={item.href}>
+                            <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                            {!isCollapsed && <span className="text-sm">{item.label}</span>}
+                          </Link>
+                        </Button>
+                      )
+                    })}
+                  </nav>
+                  {!isCollapsed && <Separator className="mt-4" />}
+                </div>
+              ))}
             </div>
           </div>
         </div>

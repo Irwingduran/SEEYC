@@ -13,15 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, BookOpen, GraduationCap, BarChart3, Settings, Zap, Sun, Moon, User, LogOut } from "lucide-react"
+import { Menu, BookOpen, GraduationCap, Users, Mail, Zap, Sun, Moon, User, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
 import { ScreenReaderOnly } from "@/components/screen-reader-only"
 
 const navigationItems = [
   { name: "Cursos", href: "/courses", icon: BookOpen },
-  { name: "Mi Aprendizaje", href: "/learning", icon: GraduationCap },
-  { name: "Panel de Control", href: "/admin-instructor", icon: Settings },
-  { name: "Progreso", href: "/progress", icon: BarChart3 },
+  { name: "Quienes Somos", href: "/about", icon: Users },
+  { name: "Contacto", href: "/contact", icon: Mail },
 ]
 
 export function Navigation() {
@@ -30,7 +29,7 @@ export function Navigation() {
   const pathname = usePathname()
 
   // Mock user state - in real app this would come from auth context
-  const isAuthenticated = pathname.includes("/learning") || pathname.includes("/profile")
+  const isAuthenticated = pathname.includes("/dashboard") || pathname.includes("/admin")
 
   return (
     <header
@@ -113,13 +112,13 @@ export function Navigation() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
+                  <Link href="/dashboard/profile" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" aria-hidden="true" />
                     <span>Mi Perfil</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/learning" className="cursor-pointer">
+                  <Link href="/dashboard/learning" className="cursor-pointer">
                     <GraduationCap className="mr-2 h-4 w-4" aria-hidden="true" />
                     <span>Mi Aprendizaje</span>
                   </Link>
@@ -190,7 +189,7 @@ export function Navigation() {
                   {isAuthenticated ? (
                     <>
                       <Button variant="ghost" className="w-full justify-start" asChild>
-                        <Link href="/profile">
+                        <Link href="/dashboard/profile">
                           <User className="mr-2 h-4 w-4" aria-hidden="true" />
                           Mi Perfil
                         </Link>

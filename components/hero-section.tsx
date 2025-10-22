@@ -26,8 +26,8 @@ const features = [
   },
   {
     icon: Play,
-    title: "Aprendizaje Interactivo",
-    description: "Videos HD, simuladores y ejercicios prácticos para un aprendizaje efectivo.",
+    title: "Aprendizaje Actualizado",
+    description: "Capacitaciones, cursos y ejercicios prácticos para un aprendizaje efectivo.",
   },
 ]
 
@@ -72,7 +72,7 @@ export function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" className="text-lg px-8">
                 <Play className="h-5 w-5 mr-2" aria-hidden="true" />
-                Comenzar Ahora
+                <Link href="/dashboard">Comenzar Ahora</Link>
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 bg-transparent" asChild>
                 <Link href="/courses">Ver Cursos</Link>

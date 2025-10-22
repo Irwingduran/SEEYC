@@ -31,7 +31,7 @@ export default function LoginPage() {
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     setIsLoading(false)
-    router.push("/learning")
+    router.push("/dashboard")
   }
 
   const handleInputChange = (field: string, value: string | boolean) => {
