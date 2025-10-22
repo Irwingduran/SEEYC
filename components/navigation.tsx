@@ -13,16 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, BookOpen, GraduationCap, Users, BarChart3, Settings, Zap, Sun, Moon, User, LogOut } from "lucide-react"
+import { Menu, BookOpen, GraduationCap, BarChart3, Settings, Zap, Sun, Moon, User, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
 import { ScreenReaderOnly } from "@/components/screen-reader-only"
 
 const navigationItems = [
   { name: "Cursos", href: "/courses", icon: BookOpen },
   { name: "Mi Aprendizaje", href: "/learning", icon: GraduationCap },
-  { name: "Instructores", href: "/instructors", icon: Users },
+  { name: "Panel de Control", href: "/admin-instructor", icon: Settings },
   { name: "Progreso", href: "/progress", icon: BarChart3 },
-  { name: "Configuración", href: "/settings", icon: Settings },
 ]
 
 export function Navigation() {

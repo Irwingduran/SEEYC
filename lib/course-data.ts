@@ -98,3 +98,5 @@ export const coursesData: Course[] = [
     image: "/electrical-panel-protection-systems.jpg",
   },
 ]
+
+export const courses = coursesData

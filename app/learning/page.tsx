@@ -1,44 +1,56 @@
 "use client"
 
-import { Navigation } from "@/components/navigation"
-import { DashboardOverview } from "@/components/dashboard-overview"
-import { EnrolledCourses } from "@/components/enrolled-courses"
-import { LearningProgress } from "@/components/learning-progress"
+import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { WelcomeSection } from "@/components/welcome-section"
+import { ContinueLearning } from "@/components/continue-learning"
+import { RecommendedCourses } from "@/components/recommended-courses"
+import { UpcomingDeadlines } from "@/components/upcoming-deadlines"
 import { Achievements } from "@/components/achievements"
-import { LearningStats } from "@/components/learning-stats"
 import { RecentActivity } from "@/components/recent-activity"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export default function LearningPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-background">
+        <DashboardHeader />
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl lg:text-4xl font-bold text-balance">
-            <span className="text-primary">Mi</span> Aprendizaje
-          </h1>
-          <p className="text-muted-foreground mt-2">Sigue tu progreso y continúa tu formación eléctrica</p>
-        </div>
+        <div className="flex">
+          <DashboardSidebar />
 
-        {/* Dashboard Grid */}
-        <div className="grid lg:grid-cols-4 gap-6">
           {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            <DashboardOverview />
-            <EnrolledCourses />
-            <LearningProgress />
-          </div>
+          <main className="flex-1 lg:ml-64 p-6">
+            <WelcomeSection />
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <LearningStats />
-            <Achievements />
-            <RecentActivity />
-          </div>
+            {/* Dashboard Grid */}
+            <div className="grid lg:grid-cols-3 gap-6 mt-6">
+              {/* Main Content Column */}
+              <div className="lg:col-span-2 space-y-6">
+                <ErrorBoundary>
+                  <ContinueLearning />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <RecommendedCourses />
+                </ErrorBoundary>
+              </div>
+
+              {/* Sidebar Column */}
+              <div className="lg:col-span-1 space-y-6">
+                <ErrorBoundary>
+                  <UpcomingDeadlines />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <Achievements />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <RecentActivity />
+                </ErrorBoundary>
+              </div>
+            </div>
+          </main>
         </div>
-      </main>
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }
