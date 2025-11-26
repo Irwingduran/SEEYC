@@ -26,6 +26,7 @@ interface Lesson {
 
 interface CourseCurriculumProps {
   courseId: string
+  modules?: any[]
 }
 
 const curriculumData: Record<string, Module[]> = {
@@ -73,9 +74,9 @@ const lessonIcons = {
   assignment: Download,
 }
 
-export function CourseCurriculum({ courseId }: CourseCurriculumProps) {
+export function CourseCurriculum({ courseId, modules: propModules }: CourseCurriculumProps) {
   const [openModules, setOpenModules] = useState<string[]>(["module-1"])
-  const modules = curriculumData[courseId] || []
+  const modules = propModules || curriculumData[courseId] || []
 
   const toggleModule = (moduleId: string) => {
     setOpenModules((prev) => (prev.includes(moduleId) ? prev.filter((id) => id !== moduleId) : [...prev, moduleId]))

@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCourseActions } from "@/hooks/use-course-actions"
 import { exportCoursesToCSV, exportCoursesToJSON, exportCourseStats } from "@/lib/export-utils"
-import type { Course } from "@/types/course"
+import { getAllCourses } from "@/lib/course-service"
+import type { Course, CourseStatus } from "@/types/course"
 import {
   Table,
   TableBody,
@@ -66,7 +67,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ErrorBoundary } from "@/components/error-boundary"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 // Tipos
 type ViewMode = "grid" | "table"
@@ -91,14 +92,18 @@ function CoursesContent() {
       },
     })
 
-  // Cargar cursos (simulado)
-  const loadCourses = () => {
-    // En producción, esto sería una llamada a API
-    setCourses(mockCourses)
+  // Cargar cursos
+  const loadCourses = async () => {
+    try {
+      const data = await getAllCourses()
+      setCourses(data)
+    } catch (error) {
+      console.error("Error loading courses:", error)
+    }
   }
 
   // Cargar cursos al montar
-  React.useEffect(() => {
+  useEffect(() => {
     loadCourses()
   }, [])
 
@@ -118,173 +123,7 @@ function CoursesContent() {
   }
 
   // Datos de ejemplo - en producción vendrían de una API
-  const mockCourses: Course[] = [
-    {
-      id: 1,
-      title: "Automatización Industrial con PLC",
-      subtitle: "Aprende programación de PLCs desde cero",
-      description: "Curso completo de automatización industrial",
-      category: "Automatización Industrial",
-      level: "Avanzado",
-      status: "published",
-      language: "es",
-      students: 245,
-      revenue: 2450,
-      rating: 4.8,
-      reviews: 89,
-      lastUpdated: "2024-01-15",
-      createdAt: "2023-06-20",
-      duration: "12 horas",
-      price: 149.99,
-      modules: [
-        { id: 1, title: "Módulo 1", description: "", lessons: [], order: 0 },
-        { id: 2, title: "Módulo 2", description: "", lessons: [], order: 1 },
-      ],
-      instructor: {
-        id: "1",
-        name: "María González",
-        email: "maria@example.com",
-        avatar: "/avatar-1.jpg",
-      },
-      instructorId: "1",
-    },
-    {
-      id: 2,
-      title: "Instalaciones Solares Residenciales",
-      subtitle: "Diseña e instala sistemas fotovoltaicos",
-      description: "Aprende a diseñar e instalar sistemas solares",
-      category: "Energía Solar",
-      level: "Intermedio",
-      status: "published",
-      language: "es",
-      students: 198,
-      revenue: 1980,
-      rating: 4.9,
-      reviews: 67,
-      lastUpdated: "2024-01-10",
-      createdAt: "2023-08-15",
-      duration: "8 horas",
-      price: 99.99,
-      modules: [
-        { id: 1, title: "Módulo 1", description: "", lessons: [], order: 0 },
-        { id: 2, title: "Módulo 2", description: "", lessons: [], order: 1 },
-        { id: 3, title: "Módulo 3", description: "", lessons: [], order: 2 },
-        { id: 4, title: "Módulo 4", description: "", lessons: [], order: 3 },
-        { id: 5, title: "Módulo 5", description: "", lessons: [], order: 4 },
-        { id: 6, title: "Módulo 6", description: "", lessons: [], order: 5 },
-      ],
-      instructor: { id: "1", name: "María González", email: "maria@example.com", avatar: "/avatar-1.jpg" },
-      instructorId: "1",
-    },
-    {
-      id: 3,
-      title: "Seguridad Eléctrica Industrial",
-      subtitle: "Normas y prácticas de seguridad",
-      description: "Curso completo de seguridad eléctrica",
-      category: "Seguridad Eléctrica",
-      level: "Básico",
-      status: "published",
-      language: "es",
-      students: 312,
-      revenue: 3120,
-      rating: 4.7,
-      reviews: 124,
-      lastUpdated: "2024-01-08",
-      createdAt: "2023-05-10",
-      duration: "6 horas",
-      price: 79.99,
-      modules: [
-        { id: 1, title: "Módulo 1", description: "", lessons: [], order: 0 },
-        { id: 2, title: "Módulo 2", description: "", lessons: [], order: 1 },
-        { id: 3, title: "Módulo 3", description: "", lessons: [], order: 2 },
-        { id: 4, title: "Módulo 4", description: "", lessons: [], order: 3 },
-        { id: 5, title: "Módulo 5", description: "", lessons: [], order: 4 },
-      ],
-      instructor: { id: "1", name: "María González", email: "maria@example.com", avatar: "/avatar-1.jpg" },
-      instructorId: "1",
-    },
-    {
-      id: 4,
-      title: "Mantenimiento de Sistemas Eléctricos",
-      subtitle: "Mantenimiento preventivo y correctivo",
-      description: "Técnicas de mantenimiento eléctrico",
-      category: "Mantenimiento Industrial",
-      level: "Intermedio",
-      status: "draft",
-      language: "es",
-      students: 0,
-      revenue: 0,
-      rating: 0,
-      reviews: 0,
-      lastUpdated: "2024-01-20",
-      createdAt: "2024-01-05",
-      duration: "5 horas",
-      price: 89.99,
-      modules: [
-        { id: 1, title: "Módulo 1", description: "", lessons: [], order: 0 },
-        { id: 2, title: "Módulo 2", description: "", lessons: [], order: 1 },
-        { id: 3, title: "Módulo 3", description: "", lessons: [], order: 2 },
-        { id: 4, title: "Módulo 4", description: "", lessons: [], order: 3 },
-      ],
-      instructor: { id: "1", name: "María González", email: "maria@example.com", avatar: "/avatar-1.jpg" },
-      instructorId: "1",
-    },
-    {
-      id: 5,
-      title: "Control de Procesos Industriales",
-      subtitle: "Sistemas de control avanzados",
-      description: "Control de procesos con sistemas modernos",
-      category: "Control de Procesos",
-      level: "Avanzado",
-      status: "draft",
-      language: "es",
-      students: 0,
-      revenue: 0,
-      rating: 0,
-      reviews: 0,
-      lastUpdated: "2024-01-18",
-      createdAt: "2024-01-12",
-      duration: "10 horas",
-      price: 129.99,
-      modules: [
-        { id: 1, title: "Módulo 1", description: "", lessons: [], order: 0 },
-        { id: 2, title: "Módulo 2", description: "", lessons: [], order: 1 },
-        { id: 3, title: "Módulo 3", description: "", lessons: [], order: 2 },
-        { id: 4, title: "Módulo 4", description: "", lessons: [], order: 3 },
-        { id: 5, title: "Módulo 5", description: "", lessons: [], order: 4 },
-        { id: 6, title: "Módulo 6", description: "", lessons: [], order: 5 },
-        { id: 7, title: "Módulo 7", description: "", lessons: [], order: 6 },
-      ],
-      instructor: { id: "1", name: "María González", email: "maria@example.com", avatar: "/avatar-1.jpg" },
-      instructorId: "1",
-    },
-    {
-      id: 6,
-      title: "Introducción a Sistemas SCADA",
-      subtitle: "Supervisión y control de procesos",
-      description: "Fundamentos de sistemas SCADA",
-      category: "Automatización Industrial",
-      level: "Básico",
-      status: "archived",
-      language: "es",
-      students: 156,
-      revenue: 1560,
-      rating: 4.5,
-      reviews: 45,
-      lastUpdated: "2023-12-01",
-      createdAt: "2023-03-15",
-      duration: "4 horas",
-      price: 59.99,
-      modules: [
-        { id: 1, title: "Módulo 1", description: "", lessons: [], order: 0 },
-        { id: 2, title: "Módulo 2", description: "", lessons: [], order: 1 },
-        { id: 3, title: "Módulo 3", description: "", lessons: [], order: 2 },
-        { id: 4, title: "Módulo 4", description: "", lessons: [], order: 3 },
-      ],
-      instructor: { id: "1", name: "María González", email: "maria@example.com", avatar: "/avatar-1.jpg" },
-      instructorId: "1",
-    },
-  ]
+  const mockCourses: Course[] = []
 
   // KPIs
   const stats = {
@@ -459,52 +298,32 @@ function CoursesContent() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/courses/${course.id}/edit`}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/courses/${course.id}`}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver como estudiante
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => duplicateCourse(course.id, course)} disabled={isActionLoading}>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Duplicar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/admin/courses/${course.id}/analytics`}>
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Analíticas
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  {course.status === "draft" && (
+                    <DropdownMenuItem onClick={() => publishCourse(course.id.toString())}>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Publicar
+                    </DropdownMenuItem>
+                  )}
                   {course.status === "published" && (
-                    <DropdownMenuItem onClick={() => archiveCourse(course.id)} disabled={isActionLoading}>
+                    <DropdownMenuItem onClick={() => archiveCourse(course.id.toString())}>
                       <Archive className="h-4 w-4 mr-2" />
                       Archivar
                     </DropdownMenuItem>
                   )}
-                  {course.status === "draft" && (
-                    <DropdownMenuItem onClick={() => publishCourse(course.id)} disabled={isActionLoading}>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Publicar
-                    </DropdownMenuItem>
-                  )}
                   {course.status === "archived" && (
-                    <DropdownMenuItem onClick={() => restoreCourse(course.id)} disabled={isActionLoading}>
-                      <Upload className="h-4 w-4 mr-2" />
+                    <DropdownMenuItem onClick={() => restoreCourse(course.id.toString())}>
+                      <CheckCircle className="h-4 w-4 mr-2" />
                       Restaurar
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem onClick={() => duplicateCourse(course.id.toString(), course)}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Duplicar
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-red-600"
-                    onClick={() => deleteCourse(course.id, course.title)}
-                    disabled={isActionLoading}
+                    onClick={() => deleteCourse(course.id.toString(), course.title)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Eliminar

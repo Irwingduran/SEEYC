@@ -254,6 +254,7 @@ export interface CourseReview {
 export interface CourseEnrollment {
   id: number
   courseId: number
+  courseVersionId: number // ID de la versión del curso al momento de la compra
   studentId: string
   studentName: string
   studentEmail: string
@@ -266,4 +267,26 @@ export interface CourseEnrollment {
   status: "active" | "completed" | "dropped"
   certificateIssued?: boolean
   certificateIssuedAt?: string
+}
+
+// Versionado de cursos - cada vez que se actualiza un curso se crea una nueva versión
+export interface CourseVersion {
+  id: number
+  courseId: number
+  version: number // Número de versión incremental (1, 2, 3, etc.)
+  modules: CourseModule[] // Snapshot del contenido en este momento
+  objectives?: CourseObjective[]
+  requirements?: CourseRequirement[]
+  createdAt: string
+  publishedAt?: string
+  isCurrentVersion: boolean // Solo la última versión es true
+  changeLog?: string // Descripción de cambios respecto a la versión anterior
+}
+
+// Historial de versiones para auditoría
+export interface CourseVersionHistory {
+  courseId: number
+  currentVersion: number
+  versions: CourseVersion[]
+  totalStudentsOnOldVersions: number
 }

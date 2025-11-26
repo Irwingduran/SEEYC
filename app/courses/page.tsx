@@ -1,14 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { CourseCard } from "@/components/course-card"
 import { CourseFilters } from "@/components/course-filters"
-import { coursesData } from "@/lib/course-data"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, TrendingUp, Award } from "lucide-react"
+import { getAllCourses } from "@/lib/course-service"
+import { Course } from "@/types/course"
 
 export default function CoursesPage() {
+  const [courses, setCourses] = useState<Course[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilters, setActiveFilters] = useState({
     category: null as string | null,
@@ -16,14 +18,22 @@ export default function CoursesPage() {
     priceRange: null as string | null,
   })
 
+  useEffect(() => {
+    const loadCourses = async () => {
+      const data = await getAllCourses()
+      setCourses(data)
+    }
+    loadCourses()
+  }, [])
+
   const filteredCourses = useMemo(() => {
-    return coursesData.filter((course) => {
+    return courses.filter((course) => {
       // Search filter
       if (
         searchQuery &&
         !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !course.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !course.instructor.toLowerCase().includes(searchQuery.toLowerCase())
+        !course.instructor.name.toLowerCase().includes(searchQuery.toLowerCase())
       ) {
         return false
       }
@@ -34,8 +44,11 @@ export default function CoursesPage() {
       }
 
       // Level filter
-      if (activeFilters.level && course.level !== activeFilters.level) {
-        return false
+      if (activeFilters.level) {
+        const normalizedLevel = course.level === "Básico" ? "Principiante" : course.level
+        if (normalizedLevel !== activeFilters.level) {
+          return false
+        }
       }
 
       // Price filter
@@ -65,7 +78,7 @@ export default function CoursesPage() {
   }, [searchQuery, activeFilters])
 
   const stats = [
-    { label: "Cursos Disponibles", value: coursesData.length, icon: BookOpen },
+    { label: "Cursos Disponibles", value: courses.length, icon: BookOpen },
     { label: "Estudiantes Activos", value: "2,500+", icon: TrendingUp },
     { label: "Certificaciones", value: "50+", icon: Award },
   ]
@@ -127,7 +140,20 @@ export default function CoursesPage() {
           {filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCourses.map((course) => (
-                <CourseCard key={course.id} {...course} />
+                <CourseCard
+                  key={course.id}
+                  id={course.id.toString()}
+                  title={course.title}
+                  description={course.description}
+                  instructor={course.instructor.name}
+                  duration={course.duration}
+                  students={course.students}
+                  rating={course.rating}
+                  price={course.price}
+                  level={course.level === "Básico" ? "Principiante" : (course.level as any)}
+                  category={course.category}
+                  image={course.thumbnail || "/images/course-placeholder.jpg"}
+                />
               ))}
             </div>
           ) : (

@@ -27,11 +27,18 @@ import {
 } from "lucide-react"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { SidebarProvider } from "@/contexts/sidebar-context"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useParams, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { ContentProtection } from "@/components/content-protection"
+import { SecureEvaluationSystem } from "@/components/secure-evaluation-system"
+import { Evaluation } from "@/types/evaluation"
+import { getEnrolledCourse, updateProgress } from "@/lib/user-service"
+import { getCourseById, getEvaluationByLessonId, getEvaluationTokenForStudent } from "@/lib/course-service"
+import { getCourseContentForStudent } from "@/lib/course-versioning"
+import { VideoPlayer } from "@/components/video-player"
 
 interface Lesson {
   id: number
@@ -40,6 +47,10 @@ interface Lesson {
   type: "video" | "document" | "quiz"
   completed: boolean
   locked: boolean
+  content?: string
+  videoUrl?: string
+  description?: string
+  resources?: Resource[]
 }
 
 interface Module {
@@ -53,6 +64,7 @@ interface Resource {
   title: string
   type: string
   size: string
+  url?: string
 }
 
 function LearnContent() {
@@ -65,62 +77,115 @@ function LearnContent() {
   const [expandedModules, setExpandedModules] = useState<number[]>([1, 2])
   const [currentLessonId, setCurrentLessonId] = useState(Number.parseInt(lessonId))
   const [userNote, setUserNote] = useState("")
+  const [courseProgress, setCourseProgress] = useState(0)
+  const [courseTitle, setCourseTitle] = useState("")
+  const [modules, setModules] = useState<Module[]>([])
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
+  const [evaluationToken, setEvaluationToken] = useState<string>("")
+
+  useEffect(() => {
+    const loadCourseData = async () => {
+      const id = Number(courseId)
+      const enrolled = await getEnrolledCourse(id)
+      const course = await getCourseById(id)
+
+      let modulesToUse: any[] = []
+
+      if (enrolled) {
+        setCourseProgress(enrolled.progress)
+        
+        // Try to get versioned content
+        if (enrolled.courseVersionId) {
+          const versionContent = await getCourseContentForStudent(id, enrolled.courseVersionId)
+          if (versionContent) {
+            modulesToUse = versionContent.modules
+            console.log(`Loaded version ${versionContent.version} for student`)
+          }
+        }
+      }
+
+      // Fallback to current course modules if no versioned content found
+      if (modulesToUse.length === 0 && course) {
+        modulesToUse = course.modules
+      }
+
+      if (course) {
+        setCourseTitle(course.title)
+        // Map modules
+        const mappedModules: Module[] = modulesToUse.map(m => ({
+          id: m.id,
+          title: m.title,
+          lessons: m.lessons.map((l: any) => ({
+            id: l.id,
+            title: l.title,
+            duration: l.duration || "10 min",
+            type: l.type === "text" ? "document" : l.type as any,
+            completed: false, // TODO: track completion
+            locked: false, // TODO: track locking
+            content: l.content,
+            videoUrl: l.videoUrl,
+            description: l.description,
+            resources: l.resources?.map((r: any) => ({
+              id: r.id,
+              title: r.title,
+              type: r.type,
+              size: r.size || "Unknown",
+              url: r.url
+            }))
+          }))
+        }))
+        setModules(mappedModules)
+      }
+    }
+    loadCourseData()
+  }, [courseId])
+
+  useEffect(() => {
+    const loadEvaluation = async () => {
+      const currentLesson = modules.flatMap(m => m.lessons).find(l => l.id === currentLessonId)
+      if (currentLesson?.type === 'quiz') {
+        const evalData = await getEvaluationByLessonId(currentLessonId)
+        if (evalData) {
+           setEvaluation(evalData)
+           // Generate token for this student/evaluation
+           const token = await getEvaluationTokenForStudent(evalData.id, "student-1") // TODO: Use real student ID
+           setEvaluationToken(token)
+        }
+      } else {
+        setEvaluation(null)
+        setEvaluationToken("")
+      }
+    }
+    if (modules.length > 0) {
+        loadEvaluation()
+    }
+  }, [currentLessonId, modules])
+
+  // Mock evaluation data removed in favor of dynamic loading
 
   // Mock data
   const course = {
-    title: "Automatización Industrial con PLC",
-    totalLessons: 36,
-    completedLessons: 8,
-    progress: 22,
+    title: courseTitle || "Cargando...",
+    totalLessons: modules.reduce((acc, m) => acc + m.lessons.length, 0),
+    completedLessons: Math.floor((courseProgress / 100) * modules.reduce((acc, m) => acc + m.lessons.length, 0)),
+    progress: courseProgress,
   }
 
-  const modules: Module[] = [
-    {
-      id: 1,
-      title: "Introducción a la Automatización Industrial",
-      lessons: [
-        { id: 1, title: "¿Qué es la automatización industrial?", duration: "15min", type: "video", completed: true, locked: false },
-        { id: 2, title: "Historia y evolución de los PLCs", duration: "20min", type: "video", completed: true, locked: false },
-        { id: 3, title: "Componentes de un sistema automatizado", duration: "25min", type: "video", completed: true, locked: false },
-        { id: 4, title: "Quiz: Fundamentos", duration: "10min", type: "quiz", completed: true, locked: false },
-      ],
-    },
-    {
-      id: 2,
-      title: "Hardware de PLCs",
-      lessons: [
-        { id: 5, title: "Arquitectura interna del PLC", duration: "30min", type: "video", completed: true, locked: false },
-        { id: 6, title: "Módulos de entrada y salida", duration: "35min", type: "video", completed: true, locked: false },
-        { id: 7, title: "Selección de hardware según aplicación", duration: "40min", type: "video", completed: true, locked: false },
-        { id: 8, title: "Práctica: Identificación de componentes", duration: "30min", type: "document", completed: true, locked: false },
-      ],
-    },
-    {
-      id: 3,
-      title: "Programación Ladder Básica",
-      lessons: [
-        { id: 9, title: "Introducción al lenguaje Ladder", duration: "25min", type: "video", completed: false, locked: false },
-        { id: 10, title: "Instrucciones básicas: Contactos y bobinas", duration: "35min", type: "video", completed: false, locked: false },
-        { id: 11, title: "Temporizadores y contadores", duration: "40min", type: "video", completed: false, locked: true },
-        { id: 12, title: "Ejercicios prácticos", duration: "45min", type: "document", completed: false, locked: true },
-      ],
-    },
-  ]
-
-  const currentLesson = modules
-    .flatMap((m) => m.lessons)
-    .find((l) => l.id === currentLessonId) || modules[0].lessons[0]
+  const currentLesson = modules.length > 0 
+    ? (modules.flatMap((m) => m.lessons).find((l) => l.id === currentLessonId) || modules[0].lessons[0])
+    : null
 
   const allLessons = modules.flatMap((m) => m.lessons)
   const currentIndex = allLessons.findIndex((l) => l.id === currentLessonId)
   const nextLesson = allLessons[currentIndex + 1]
   const prevLesson = allLessons[currentIndex - 1]
 
-  const resources: Resource[] = [
-    { id: 1, title: "Guía de PLCs - Conceptos Básicos", type: "PDF", size: "2.5 MB" },
-    { id: 2, title: "Diagramas Ladder - Ejemplos", type: "PDF", size: "1.8 MB" },
-    { id: 3, title: "Código fuente - Ejercicio 1", type: "ZIP", size: "450 KB" },
-  ]
+  if (!currentLesson) {
+    return <div className="flex items-center justify-center min-h-screen">Cargando contenido...</div>
+  }
+
+  const resources: Resource[] = currentLesson.resources || []
 
   const toggleModule = (moduleId: number) => {
     setExpandedModules((prev) =>
@@ -136,9 +201,23 @@ function LearnContent() {
     setCurrentLessonId(lesson.id)
   }
 
-  const handleMarkComplete = () => {
+  const handleMarkComplete = async () => {
     toast.success("¡Lección completada!")
-    // Aquí se actualizaría el progreso en el backend
+    
+    // Calcular nuevo progreso (simulado)
+    const newProgress = Math.min(courseProgress + 5, 100)
+    setCourseProgress(newProgress)
+    
+    // Encontrar siguiente lección
+    const currentIndex = allLessons.findIndex(l => l.id === currentLessonId)
+    const nextLesson = allLessons[currentIndex + 1]
+    
+    await updateProgress(
+      Number(courseId), 
+      newProgress, 
+      nextLesson?.id,
+      nextLesson?.title
+    )
   }
 
   const handleSaveNote = () => {
@@ -156,6 +235,14 @@ function LearnContent() {
       default:
         return FileText
     }
+  }
+
+  const handleTimeUpdate = (time: number) => {
+    // Track time
+  }
+
+  const handleQuizTrigger = () => {
+    toast.info("Quiz triggered!")
   }
 
   return (
@@ -293,153 +380,186 @@ function LearnContent() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto p-6 space-y-6">
-            {/* Video/Content Player */}
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg overflow-hidden">
-              <div className="aspect-video bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-                <div className="text-center text-white">
-                  <PlayCircle className="h-20 w-20 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">Reproductor de Video</p>
-                  <p className="text-sm text-white/70 mt-2">
-                    {currentLesson.type === "video" ? "Contenido de video aquí" : "Contenido del documento"}
-                  </p>
-                </div>
-              </div>
-            </Card>
+          <ContentProtection>
+            <div className="max-w-6xl mx-auto p-6 space-y-6">
+              {currentLesson.type === "quiz" ? (
+                evaluation && evaluationToken ? (
+                  <SecureEvaluationSystem
+                    evaluation={evaluation}
+                    studentId="student-1"
+                    courseId={Number(courseId)}
+                    courseVersionId={1}
+                    token={evaluationToken}
+                    onComplete={(score, passed) => {
+                      if (passed) {
+                        toast.success(`¡Felicidades! Aprobaste con ${score}%`)
+                        handleMarkComplete()
+                      } else {
+                        toast.error(`No aprobado. Calificación: ${score}%`)
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                )
+              ) : (
+                <>
+                  {/* Video/Content Player */}
+                  <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg overflow-hidden">
+                    {currentLesson.type === "video" ? (
+                      <div className="aspect-video bg-black">
+                        <VideoPlayer
+                          lesson={currentLesson}
+                          src={currentLesson.videoUrl}
+                          onComplete={handleMarkComplete}
+                          onQuizTrigger={handleQuizTrigger}
+                          onTimeUpdate={handleTimeUpdate}
+                          isFullscreen={isFullscreen}
+                          onFullscreenChange={setIsFullscreen}
+                        />
+                      </div>
+                    ) : (
+                      <div className="min-h-[400px] p-8 bg-white dark:bg-slate-900">
+                        {currentLesson.content ? (
+                          <div 
+                            className="prose dark:prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                            <FileText className="h-16 w-16 mb-4 opacity-20" />
+                            <p>Contenido de lectura</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card>
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                disabled={!prevLesson}
-                onClick={() => prevLesson && setCurrentLessonId(prevLesson.id)}
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Anterior
-              </Button>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{currentLesson.type}</Badge>
-                <Badge variant="outline">{currentLesson.duration}</Badge>
-              </div>
-              <Button
-                disabled={!nextLesson || nextLesson.locked}
-                onClick={() => nextLesson && setCurrentLessonId(nextLesson.id)}
-              >
-                Siguiente
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-
-            {/* Tabs Content */}
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full max-w-2xl grid-cols-3">
-                <TabsTrigger value="overview">Descripción</TabsTrigger>
-                <TabsTrigger value="resources">Recursos</TabsTrigger>
-                <TabsTrigger value="notes">Mis Notas</TabsTrigger>
-              </TabsList>
-
-              {/* Overview Tab */}
-              <TabsContent value="overview">
-                <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg">
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-bold mb-4">Acerca de esta lección</h3>
-                    <div className="prose prose-sm max-w-none">
-                      <p className="text-muted-foreground leading-relaxed">
-                        En esta lección aprenderás los conceptos fundamentales de la automatización
-                        industrial. Exploraremos qué es un sistema automatizado, sus componentes
-                        principales y cómo se aplican en diferentes industrias.
-                      </p>
-                      <h4 className="font-semibold mt-6 mb-3">Lo que aprenderás:</h4>
-                      <ul className="space-y-2 text-muted-foreground">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                          <span>Definición y alcance de la automatización industrial</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                          <span>Componentes básicos de un sistema automatizado</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                          <span>Aplicaciones en diferentes industrias</span>
-                        </li>
-                      </ul>
+                  {/* Navigation Buttons */}
+                  <div className="flex items-center justify-between">
+                    <Button
+                      variant="outline"
+                      disabled={!prevLesson}
+                      onClick={() => prevLesson && setCurrentLessonId(prevLesson.id)}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      Anterior
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{currentLesson.type}</Badge>
+                      <Badge variant="outline">{currentLesson.duration}</Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                    <Button
+                      disabled={!nextLesson || nextLesson.locked}
+                      onClick={() => nextLesson && setCurrentLessonId(nextLesson.id)}
+                    >
+                      Siguiente
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
 
-              {/* Resources Tab */}
-              <TabsContent value="resources">
-                <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg">
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-bold mb-4">Recursos de la lección</h3>
-                    <div className="space-y-3">
-                      {resources.map((resource) => (
-                        <div
-                          key={resource.id}
-                          className="flex items-center justify-between p-4 rounded-lg border bg-background/50 hover:bg-background/80 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-primary/10">
-                              <FileDown className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{resource.title}</p>
+                  {/* Tabs Content */}
+                  <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="grid w-full max-w-2xl grid-cols-3">
+                      <TabsTrigger value="overview">Descripción</TabsTrigger>
+                      <TabsTrigger value="resources">Recursos</TabsTrigger>
+                      <TabsTrigger value="notes">Mis Notas</TabsTrigger>
+                    </TabsList>
+
+                    {/* Overview Tab */}
+                    <TabsContent value="overview">
+                      <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg">
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-bold mb-4">Acerca de esta lección</h3>
+                          <div className="prose prose-sm max-w-none">
+                            <p className="text-muted-foreground leading-relaxed">
+                              {currentLesson.description || "Sin descripción disponible para esta lección."}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    {/* Resources Tab */}
+                    <TabsContent value="resources">
+                      <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg">
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-bold mb-4">Recursos de la lección</h3>
+                          <div className="space-y-3">
+                            {resources.map((resource) => (
+                              <div
+                                key={resource.id}
+                                className="flex items-center justify-between p-4 rounded-lg border bg-background/50 hover:bg-background/80 transition-colors"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-lg bg-primary/10">
+                                    <FileDown className="h-5 w-5 text-primary" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{resource.title}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {resource.type} • {resource.size}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button variant="outline" size="sm">
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Descargar
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    {/* Notes Tab */}
+                    <TabsContent value="notes">
+                      <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg">
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-bold mb-4">
+                            Mis notas de esta lección
+                          </h3>
+                          <Textarea
+                            placeholder="Escribe tus notas aquí..."
+                            value={userNote}
+                            onChange={(e) => setUserNote(e.target.value)}
+                            className="min-h-[200px] mb-4"
+                          />
+                          <div className="flex justify-end">
+                            <Button onClick={handleSaveNote}>
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Guardar nota
+                            </Button>
+                          </div>
+
+                          {/* Previous notes */}
+                          <Separator className="my-6" />
+                          <h4 className="font-semibold mb-3">Notas anteriores</h4>
+                          <div className="space-y-3">
+                            <div className="p-4 rounded-lg border bg-background/50">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium">Lección 2</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Hace 2 días
+                                </span>
+                              </div>
                               <p className="text-sm text-muted-foreground">
-                                {resource.type} • {resource.size}
+                                Los PLCs evolucionaron desde relés mecánicos. Importante
+                                recordar la diferencia entre PLC y microcontrolador.
                               </p>
                             </div>
                           </div>
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            Descargar
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Notes Tab */}
-              <TabsContent value="notes">
-                <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg">
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-bold mb-4">Mis notas de esta lección</h3>
-                    <Textarea
-                      placeholder="Escribe tus notas aquí..."
-                      value={userNote}
-                      onChange={(e) => setUserNote(e.target.value)}
-                      className="min-h-[200px] mb-4"
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleSaveNote}>
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Guardar nota
-                      </Button>
-                    </div>
-
-                    {/* Previous notes */}
-                    <Separator className="my-6" />
-                    <h4 className="font-semibold mb-3">Notas anteriores</h4>
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-lg border bg-background/50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Lección 2</span>
-                          <span className="text-xs text-muted-foreground">Hace 2 días</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Los PLCs evolucionaron desde relés mecánicos. Importante recordar la
-                          diferencia entre PLC y microcontrolador.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+                </>
+              )}
+            </div>
+          </ContentProtection>
         </div>
       </main>
     </div>

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSidebar } from "@/contexts/sidebar-context"
+import { logout } from "@/lib/actions"
 import {
   Shield,
   Users,
@@ -153,104 +154,8 @@ export function AdminSidebar() {
             )}
           </div>
 
-          {/* User Profile Section */}
-          <div className={cn("p-4 border-b", isCollapsed && "p-2")}>
-            {!isCollapsed ? (
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src="/admin-avatar.jpg" alt="María González" />
-                  <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
-                    MG
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">María González</p>
-                  <div className="flex items-center gap-1">
-                    <Badge variant="secondary" className="text-xs h-4 px-1">
-                      Admin
-                    </Badge>
-                    <Badge variant="outline" className="text-xs h-4 px-1">
-                      Instructor
-                    </Badge>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/profile">
-                        <User className="mr-2 h-4 w-4" />
-                        Mi Perfil
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/settings">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Configuración
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Cerrar Sesión
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 mx-auto">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/admin-avatar.jpg" alt="María González" />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xs">
-                        MG
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" side="right" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">María González</p>
-                      <div className="flex gap-1">
-                        <Badge variant="secondary" className="text-xs h-4">
-                          Admin
-                        </Badge>
-                        <Badge variant="outline" className="text-xs h-4">
-                          Instructor
-                        </Badge>
-                      </div>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/profile">
-                      <User className="mr-2 h-4 w-4" />
-                      Mi Perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/settings">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Configuración
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar Sesión
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
+          {/* User Profile Section - Removed */}
+
 
           {/* Navigation & Actions */}
           <div className="flex-1 overflow-y-auto">
@@ -384,6 +289,22 @@ export function AdminSidebar() {
                   {!isCollapsed && <Separator className="mt-4" />}
                 </div>
               ))}
+
+              {/* Logout Button */}
+              <div className="mt-auto pb-4">
+                 <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50",
+                      isCollapsed ? "h-10 w-10 p-0 mx-auto" : "h-9"
+                    )}
+                    size="sm"
+                    onClick={() => logout()}
+                  >
+                    <LogOut className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                    {!isCollapsed && <span className="text-sm">Cerrar Sesión</span>}
+                  </Button>
+              </div>
             </div>
           </div>
         </div>

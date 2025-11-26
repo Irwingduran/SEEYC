@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Course, CourseStatus } from "@/types/course"
+import { updateCourse, deleteCourse as deleteCourseService, createCourse } from "@/lib/course-service"
 
 interface UseCourseActionsProps {
   onSuccess?: () => void
@@ -17,11 +18,7 @@ export function useCourseActions({ onSuccess }: UseCourseActionsProps = {}) {
   const publishCourse = async (courseId: number | string) => {
     setIsLoading(true)
     try {
-      // Aquí iría la llamada a tu API
-      // await fetch(`/api/courses/${courseId}/publish`, { method: 'POST' })
-
-      // Simulación
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await updateCourse(Number(courseId), { status: 'published' })
 
       toast.success("Curso publicado exitosamente", {
         description: "El curso ahora es visible para todos los estudiantes",
@@ -46,9 +43,7 @@ export function useCourseActions({ onSuccess }: UseCourseActionsProps = {}) {
   const archiveCourse = async (courseId: number | string) => {
     setIsLoading(true)
     try {
-      // await fetch(`/api/courses/${courseId}/archive`, { method: 'POST' })
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await updateCourse(Number(courseId), { status: 'archived' })
 
       toast.success("Curso archivado exitosamente", {
         description: "El curso ya no es visible para nuevos estudiantes",
@@ -73,9 +68,7 @@ export function useCourseActions({ onSuccess }: UseCourseActionsProps = {}) {
   const restoreCourse = async (courseId: number | string) => {
     setIsLoading(true)
     try {
-      // await fetch(`/api/courses/${courseId}/restore`, { method: 'POST' })
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await updateCourse(Number(courseId), { status: 'draft' })
 
       toast.success("Curso restaurado exitosamente", {
         description: "El curso ha sido movido a borradores",
@@ -100,15 +93,18 @@ export function useCourseActions({ onSuccess }: UseCourseActionsProps = {}) {
   const duplicateCourse = async (courseId: number | string, course: Course) => {
     setIsLoading(true)
     try {
-      // await fetch(`/api/courses/${courseId}/duplicate`, { method: 'POST' })
-
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const { id, ...courseData } = course
+      const newCourse = await createCourse({
+        ...courseData,
+        title: `${course.title} (Copia)`,
+        status: 'draft'
+      })
 
       toast.success("Curso duplicado exitosamente", {
         description: `Se ha creado una copia de "${course.title}"`,
         action: {
           label: "Ver curso",
-          onClick: () => router.push(`/admin/courses/${courseId + 1000}/edit`),
+          onClick: () => router.push(`/admin/courses/${newCourse.id}/edit`),
         },
       })
 
@@ -140,9 +136,7 @@ export function useCourseActions({ onSuccess }: UseCourseActionsProps = {}) {
 
     setIsLoading(true)
     try {
-      // await fetch(`/api/courses/${courseId}`, { method: 'DELETE' })
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await deleteCourseService(Number(courseId))
 
       toast.success("Curso eliminado exitosamente", {
         description: "El curso y todos sus datos han sido eliminados",

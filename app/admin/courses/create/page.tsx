@@ -41,11 +41,16 @@ import { ErrorBoundary } from "@/components/error-boundary"
 import { useState } from "react"
 import { CourseContentBuilder } from "@/components/course-content-builder"
 import { CoursePreview } from "@/components/course-preview"
+import { createCourse } from "@/lib/course-service"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 function CreateCourseContent() {
   const { isCollapsed } = useSidebar()
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Form state
   const [courseData, setCourseData] = useState({
@@ -53,7 +58,7 @@ function CreateCourseContent() {
     subtitle: "",
     description: "",
     category: "",
-    level: "",
+    level: "Básico",
     language: "es",
     price: "",
     thumbnail: "",
@@ -64,7 +69,39 @@ function CreateCourseContent() {
     isPublished: false,
   })
 
-  const [modules, setModules] = useState([
+  const handleSave = async () => {
+    try {
+      setIsSaving(true)
+      
+      // Validar datos mínimos
+      if (!courseData.title) {
+        toast.error("El título es obligatorio")
+        return
+      }
+
+      await createCourse({
+        title: courseData.title,
+        subtitle: courseData.subtitle,
+        description: courseData.description,
+        category: courseData.category,
+        level: courseData.level as any,
+        price: Number(courseData.price) || 0,
+        duration: courseData.duration,
+        modules: modules as any,
+        status: courseData.isPublished ? "published" : "draft"
+      })
+
+      toast.success("Curso creado exitosamente")
+      router.push("/admin/courses")
+    } catch (error) {
+      console.error(error)
+      toast.error("Error al crear el curso")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const [modules, setModules] = useState<any[]>([
     {
       id: 1,
       title: "Introducción al Curso",
@@ -131,11 +168,14 @@ function CreateCourseContent() {
                 <Eye className="h-4 w-4 mr-2" />
                 Vista Previa
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                Guardar Borrador
+                {isSaving ? "Guardando..." : "Guardar Borrador"}
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={() => {
+                setCourseData(prev => ({ ...prev, isPublished: true }))
+                setTimeout(handleSave, 100)
+              }} disabled={isSaving}>
                 <Upload className="h-4 w-4 mr-2" />
                 Publicar Curso
               </Button>

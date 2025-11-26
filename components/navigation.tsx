@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Menu, BookOpen, GraduationCap, Users, Mail, Zap, Sun, Moon, User, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
+import { logout } from "@/lib/actions"
 import { ScreenReaderOnly } from "@/components/screen-reader-only"
 
 const navigationItems = [
@@ -124,7 +125,7 @@ export function Navigation() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => logout()}>
                   <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
                   <span>Cerrar Sesión</span>
                 </DropdownMenuItem>
@@ -133,10 +134,10 @@ export function Navigation() {
           ) : (
             <div className="hidden sm:flex items-center space-x-2">
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/auth/login">Iniciar Sesión</Link>
+                <Link href="/login">Iniciar Sesión</Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/auth/register">Registrarse</Link>
+                <Link href="/register">Registrarse</Link>
               </Button>
             </div>
           )}
@@ -194,7 +195,7 @@ export function Navigation() {
                           Mi Perfil
                         </Link>
                       </Button>
-                      <Button variant="ghost" className="w-full justify-start">
+                      <Button variant="ghost" className="w-full justify-start" onClick={() => logout()}>
                         <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
                         Cerrar Sesión
                       </Button>

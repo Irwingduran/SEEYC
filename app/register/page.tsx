@@ -47,7 +47,7 @@ export default function RegisterPage() {
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     setIsLoading(false)
-    router.push("/auth/login")
+    router.push("/login")
   }
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -283,7 +283,7 @@ export default function RegisterPage() {
             {/* Login Link */}
             <div className="text-center text-sm">
               <span className="text-muted-foreground">¿Ya tienes una cuenta? </span>
-              <Link href="/auth/login" className="text-primary hover:underline font-medium">
+              <Link href="/login" className="text-primary hover:underline font-medium">
                 Inicia sesión aquí
               </Link>
             </div>

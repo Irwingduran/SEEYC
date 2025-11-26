@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Star, Users, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { getAllCourses } from "@/lib/course-service"
+import { Course } from "@/types/course"
 
 const recommendedCourses = [
   {
@@ -59,20 +61,43 @@ const recommendedCourses = [
 ]
 
 export function RecommendedCourses() {
+  const [courses, setCourses] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const coursesPerView = 2
 
+  useEffect(() => {
+    const fetchCourses = async () => {
+      const allCourses = await getAllCourses()
+      const mapped = allCourses.map(c => ({
+        id: c.id,
+        title: c.title,
+        instructor: c.instructor.name,
+        rating: c.rating,
+        students: c.students,
+        duration: c.duration,
+        price: c.price === 0 ? "Gratis" : `$${c.price}`,
+        image: c.thumbnail || "/images/course-placeholder.jpg",
+        level: c.level,
+        category: c.category
+      }))
+      setCourses(mapped)
+    }
+    fetchCourses()
+  }, [])
+
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + coursesPerView >= recommendedCourses.length ? 0 : prev + coursesPerView))
+    setCurrentIndex((prev) => (prev + coursesPerView >= courses.length ? 0 : prev + coursesPerView))
   }
 
   const prevSlide = () => {
     setCurrentIndex((prev) =>
-      prev === 0 ? Math.max(0, recommendedCourses.length - coursesPerView) : prev - coursesPerView,
+      prev === 0 ? Math.max(0, courses.length - coursesPerView) : prev - coursesPerView,
     )
   }
 
-  const visibleCourses = recommendedCourses.slice(currentIndex, currentIndex + coursesPerView)
+  const visibleCourses = courses.slice(currentIndex, currentIndex + coursesPerView)
+
+  if (courses.length === 0) return null
 
   return (
     <Card>

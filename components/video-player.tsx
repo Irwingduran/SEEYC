@@ -23,6 +23,7 @@ interface VideoPlayerProps {
     title: string
     duration: string
   }
+  src?: string
   onComplete: () => void
   onQuizTrigger: () => void
   onTimeUpdate: (time: number) => void
@@ -32,6 +33,7 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({
   lesson,
+  src,
   onComplete,
   onQuizTrigger,
   onTimeUpdate,
@@ -190,7 +192,7 @@ export function VideoPlayer({
       <video
         ref={videoRef}
         className="w-full h-full object-contain"
-        src="/sample-electrical-lesson.mp4"
+        src={src || "/sample-electrical-lesson.mp4"}
         poster="/electrical-lesson-thumbnail.jpg"
         onClick={togglePlay}
       />

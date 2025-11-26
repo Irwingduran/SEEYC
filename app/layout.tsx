@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
+import Providers from "@/components/session-provider"
 import { AccessibilitySkipLink } from "@/components/accessibility-skip-link"
 import { Toaster } from "sonner"
 import { Suspense } from "react"
@@ -35,11 +36,13 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <Suspense fallback={null}>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-            <AccessibilitySkipLink />
-            <div id="main-content">{children}</div>
-            <Toaster position="top-right" richColors closeButton />
-          </ThemeProvider>
+          <Providers>
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+              <AccessibilitySkipLink />
+              <div id="main-content">{children}</div>
+              <Toaster position="top-right" richColors closeButton />
+            </ThemeProvider>
+          </Providers>
         </Suspense>
         <Analytics />
       </body>

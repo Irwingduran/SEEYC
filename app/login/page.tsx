@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
-
+import { useFormState, useFormStatus } from "react-dom"
+import { authenticate } from "@/lib/actions"
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,33 +10,31 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Eye, EyeOff, Zap, Mail, Lock, ArrowLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Eye, EyeOff, Zap, Mail, Lock, ArrowLeft, AlertCircle } from "lucide-react"
+
+function LoginButton() {
+  const { pending } = useFormStatus()
+ 
+  return (
+    <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={pending}>
+      {pending ? (
+        <>
+          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+          Iniciando sesión...
+        </>
+      ) : (
+        <>
+          Iniciar Sesión
+          <Zap className="ml-2 h-4 w-4" />
+        </>
+      )}
+    </Button>
+  )
+}
 
 export default function LoginPage() {
+  const [errorMessage, dispatch] = useFormState(authenticate, undefined)
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
-  })
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    // Simulate authentication
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    setIsLoading(false)
-    router.push("/dashboard")
-  }
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
@@ -67,7 +65,7 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form action={dispatch} className="space-y-4">
               {/* Email Field */}
               <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>
@@ -75,10 +73,9 @@ export default function LoginPage() {
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="tu@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
                     className="pl-10 bg-background/60 backdrop-blur-sm border-border/40"
                     required
                   />
@@ -92,17 +89,17 @@ export default function LoginPage() {
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Tu contraseña"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
                     className="pl-10 pr-10 bg-background/60 backdrop-blur-sm border-border/40"
                     required
+                    minLength={6}
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
@@ -115,34 +112,26 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
-                    checked={formData.rememberMe}
-                    onCheckedChange={(checked) => handleInputChange("rememberMe", checked as boolean)}
-                  />
-                  <Label htmlFor="remember" className="text-sm">
+                  <Checkbox id="remember" />
+                  <Label htmlFor="remember" className="text-sm font-normal">
                     Recordarme
                   </Label>
                 </div>
-                <Link href="/auth/reset" className="text-sm text-primary hover:underline">
+                <Link href="/reset" className="text-sm text-primary hover:underline">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
 
-              {/* Submit Button */}
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Iniciando sesión...
-                  </>
-                ) : (
-                  "Iniciar Sesión"
-                )}
-              </Button>
+              {errorMessage && (
+                <div className="flex items-center space-x-2 text-red-500 bg-red-50 dark:bg-red-950/50 p-3 rounded-md text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  <p>{errorMessage}</p>
+                </div>
+              )}
+
+              <LoginButton />
             </form>
 
             <div className="space-y-4">
@@ -190,7 +179,7 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <div className="text-center text-sm">
               <span className="text-muted-foreground">¿No tienes una cuenta? </span>
-              <Link href="/auth/register" className="text-primary hover:underline font-medium">
+              <Link href="/register" className="text-primary hover:underline font-medium">
                 Regístrate aquí
               </Link>
             </div>

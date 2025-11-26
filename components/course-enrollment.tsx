@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Play, BookOpen, Download, Users, Clock, Award, Shield } from "lucide-react"
 import type { Course } from "@/lib/course-data"
+import { enrollCourse } from "@/lib/user-service"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface CourseEnrollmentProps {
   course: Course
@@ -14,12 +17,20 @@ interface CourseEnrollmentProps {
 
 export function CourseEnrollment({ course }: CourseEnrollmentProps) {
   const [isEnrolling, setIsEnrolling] = useState(false)
+  const router = useRouter()
 
   const handleEnrollment = async () => {
     setIsEnrolling(true)
-    // Simulate enrollment process
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsEnrolling(false)
+    try {
+      await enrollCourse(Number(course.id))
+      toast.success("¡Te has inscrito al curso exitosamente!")
+      router.push("/dashboard")
+    } catch (error) {
+      console.error("Error enrolling:", error)
+      toast.error("Hubo un error al inscribirte. Inténtalo de nuevo.")
+    } finally {
+      setIsEnrolling(false)
+    }
   }
 
   const features = [

@@ -23,82 +23,87 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { getAllCourses } from "@/lib/course-service"
+import { useState, useEffect } from "react"
 
 function AdminDashboardContent() {
   const { isCollapsed } = useSidebar()
+  const [stats, setStats] = useState({
+    totalCourses: 0,
+    publishedCourses: 0,
+    draftCourses: 0,
+    archivedCourses: 0,
+    totalStudents: 0,
+    totalRevenue: 0,
+    avgRating: 0,
+    totalEnrollments: 0
+  })
 
-  // KPIs principales
+  useEffect(() => {
+    const loadStats = async () => {
+      const courses = await getAllCourses()
+      
+      const published = courses.filter(c => c.status === 'published')
+      const draft = courses.filter(c => c.status === 'draft')
+      const archived = courses.filter(c => c.status === 'archived')
+      
+      const totalStudents = courses.reduce((sum, c) => sum + (c.students || 0), 0)
+      const totalRevenue = courses.reduce((sum, c) => sum + (c.revenue || 0), 0)
+      const avgRating = courses.length > 0 
+        ? courses.reduce((sum, c) => sum + (c.rating || 0), 0) / courses.length 
+        : 0
+      
+      setStats({
+        totalCourses: courses.length,
+        publishedCourses: published.length,
+        draftCourses: draft.length,
+        archivedCourses: archived.length,
+        totalStudents,
+        totalRevenue,
+        avgRating,
+        totalEnrollments: totalStudents
+      })
+    }
+    loadStats()
+  }, [])
+
+  // KPIs principales calculados dinámicamente
   const kpis = [
     {
-      title: "Usuarios Totales",
-      value: "2,845",
-      change: "+12.5%",
-      trend: "up",
+      title: "Estudiantes Inscritos",
+      value: stats.totalStudents.toLocaleString(),
+      subValue: `${stats.totalEnrollments} inscripciones`,
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-600/10",
-      description: "vs. mes anterior",
+      description: "Total activos",
     },
     {
-      title: "Cursos Activos",
-      value: "48",
-      change: "+8",
-      trend: "up",
+      title: "Cursos Publicados",
+      value: stats.publishedCourses.toString(),
+      subValue: `${stats.draftCourses} en borrador`,
       icon: BookOpen,
       color: "text-green-600",
       bgColor: "bg-green-600/10",
-      description: "publicados",
+      description: `${stats.totalCourses} total`,
     },
     {
-      title: "Ingresos del Mes",
-      value: "$12,450",
-      change: "+23.1%",
-      trend: "up",
+      title: "Ingresos Generados",
+      value: `$${stats.totalRevenue.toLocaleString()}`,
+      subValue: `${stats.totalStudents} estudiantes`,
       icon: DollarSign,
       color: "text-purple-600",
       bgColor: "bg-purple-600/10",
-      description: "vs. mes anterior",
+      description: "Total acumulado",
     },
     {
-      title: "Tasa de Finalización",
-      value: "68%",
-      change: "-2.3%",
-      trend: "down",
-      icon: GraduationCap,
+      title: "Calificación Promedio",
+      value: stats.avgRating.toFixed(1),
+      subValue: "⭐".repeat(Math.round(stats.avgRating)),
+      icon: Star,
       color: "text-orange-600",
       bgColor: "bg-orange-600/10",
-      description: "promedio",
-    },
-  ]
-
-  // Cursos populares
-  const popularCourses = [
-    {
-      id: 1,
-      title: "Automatización Industrial con PLC",
-      students: 245,
-      rating: 4.8,
-      revenue: "$2,450",
-      image: "/course-1.jpg",
-      status: "Activo",
-    },
-    {
-      id: 2,
-      title: "Instalaciones Solares Residenciales",
-      students: 198,
-      rating: 4.9,
-      revenue: "$1,980",
-      image: "/course-2.jpg",
-      status: "Activo",
-    },
-    {
-      id: 3,
-      title: "Seguridad Eléctrica Industrial",
-      students: 312,
-      rating: 4.7,
-      revenue: "$3,120",
-      image: "/course-3.jpg",
-      status: "Activo",
+      description: "De todos los cursos",
     },
   ]
 
@@ -244,25 +249,12 @@ function AdminDashboardContent() {
                   <div className={`p-3 rounded-lg ${kpi.bgColor}`}>
                     <kpi.icon className={`h-6 w-6 ${kpi.color}`} />
                   </div>
-                  <div className="flex items-center gap-1">
-                    {kpi.trend === "up" ? (
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-red-600" />
-                    )}
-                    <span
-                      className={`text-sm font-medium ${
-                        kpi.trend === "up" ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {kpi.change}
-                    </span>
-                  </div>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">{kpi.title}</p>
                   <p className="text-2xl md:text-3xl font-bold">{kpi.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{kpi.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{kpi.subValue}</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">{kpi.description}</p>
                 </div>
               </CardContent>
             </Card>
@@ -299,57 +291,6 @@ function AdminDashboardContent() {
                     </Link>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Popular Courses */}
-            <Card className="border-0 bg-card/60 backdrop-blur-sm shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Cursos Más Populares</CardTitle>
-                    <CardDescription>Los cursos con mejor desempeño este mes</CardDescription>
-                  </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/admin/courses">
-                      Ver todos
-                      <ArrowUpRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {popularCourses.map((course) => (
-                  <div
-                    key={course.id}
-                    className="flex flex-col sm:flex-row gap-4 p-4 rounded-lg border bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="w-full sm:w-24 h-24 sm:h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <BookOpen className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold text-sm mb-1">{course.title}</h3>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {course.students} estudiantes
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              {course.rating}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{course.status}</Badge>
-                          <span className="font-semibold text-green-600">{course.revenue}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </CardContent>
             </Card>
 

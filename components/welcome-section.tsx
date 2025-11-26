@@ -3,38 +3,92 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Target, TrendingUp, Award } from "lucide-react"
+import { useEffect, useState } from "react"
+import { getUserProfile, getEnrolledCourses } from "@/lib/user-service"
 
 export function WelcomeSection() {
-  const stats = [
+  const [userName, setUserName] = useState("Estudiante")
+  const [stats, setStats] = useState([
     {
       icon: Clock,
       label: "Tiempo de Estudio Hoy",
-      value: "2h 30m",
-      change: "+15m vs ayer",
+      value: "0h 0m",
+      change: "Sin actividad",
       color: "text-blue-600",
     },
     {
       icon: Target,
       label: "Objetivo Semanal",
-      value: "85%",
-      change: "17h de 20h",
+      value: "0%",
+      change: "0h de 10h",
       color: "text-green-600",
     },
     {
       icon: TrendingUp,
       label: "Racha de Estudio",
-      value: "7 días",
-      change: "¡Nuevo récord!",
+      value: "0 días",
+      change: "¡Sigue así!",
       color: "text-purple-600",
     },
     {
       icon: Award,
       label: "Próximo Certificado",
-      value: "92%",
-      change: "Automatización Industrial",
+      value: "0%",
+      change: "Ninguno",
       color: "text-orange-600",
     },
-  ]
+  ])
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [profile, courses] = await Promise.all([
+          getUserProfile(),
+          getEnrolledCourses()
+        ])
+
+        setUserName(profile.name.split(" ")[0]) // First name
+
+        // Calculate "Next Certificate" (highest progress course not yet completed)
+        const activeCourses = courses.filter(c => c.status === 'active')
+        const nextCertCourse = activeCourses.sort((a, b) => b.progress - a.progress)[0]
+        
+        setStats([
+          {
+            icon: Clock,
+            label: "Tiempo Total",
+            value: `${profile.totalHours}h`,
+            change: "Acumulado",
+            color: "text-blue-600",
+          },
+          {
+            icon: Target,
+            label: "Cursos Completados",
+            value: profile.coursesCompleted.toString(),
+            change: "Total",
+            color: "text-green-600",
+          },
+          {
+            icon: TrendingUp,
+            label: "Racha de Estudio",
+            value: `${profile.currentStreak} días`,
+            change: "¡Sigue así!",
+            color: "text-purple-600",
+          },
+          {
+            icon: Award,
+            label: "Próximo Certificado",
+            value: nextCertCourse ? `${nextCertCourse.progress}%` : "N/A",
+            change: nextCertCourse ? nextCertCourse.title : "Inscríbete a un curso",
+            color: "text-orange-600",
+          },
+        ])
+      } catch (error) {
+        console.error("Failed to load welcome stats", error)
+      }
+    }
+    loadData()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -43,14 +97,9 @@ export function WelcomeSection() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-balance">
-              ¡Bienvenido de vuelta, <span className="text-primary">Carlos</span>!
+              ¡Bienvenido de vuelta, <span className="text-primary">{userName}</span>!
             </h2>
             <p className="text-muted-foreground mt-2">Continúa tu formación en sistemas eléctricos especializados</p>
-          </div>
-          <div className="hidden sm:block">
-            <Badge variant="secondary" className="text-sm px-3 py-1">
-              Nivel: Intermedio
-            </Badge>
           </div>
         </div>
       </div>
@@ -62,7 +111,7 @@ export function WelcomeSection() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs truncate max-w-[120px]">
                   {stat.change}
                 </Badge>
               </div>

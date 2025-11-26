@@ -30,9 +30,11 @@ import {
   BarChart3,
 } from "lucide-react"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { getAllCourses } from "@/lib/course-service"
+import { getEnrolledCourses } from "@/lib/user-service"
 
 interface Course {
   id: number
@@ -40,7 +42,7 @@ interface Course {
   description: string
   instructor: string
   category: string
-  level: "Básico" | "Intermedio" | "Avanzado"
+  level: "Básico" | "Intermedio" | "Avanzado" | "Experto"
   duration: string
   enrolled: boolean
   progress?: number
@@ -56,128 +58,37 @@ function CoursesContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [levelFilter, setLevelFilter] = useState("all")
+  const [allCourses, setAllCourses] = useState<Course[]>([])
 
-  // Mock courses data - estos vendrían del backend/admin
-  const allCourses: Course[] = [
-    {
-      id: 1,
-      title: "Introducción a Sistemas Eléctricos",
-      description: "Fundamentos de electricidad y circuitos básicos para principiantes",
-      instructor: "Ing. María González",
-      category: "Electricidad",
-      level: "Básico",
-      duration: "8 horas",
-      enrolled: true,
-      progress: 85,
-      rating: 4.8,
-      students: 245,
-      lessons: 24,
-      status: "published",
-      nextLesson: "Circuitos en Serie y Paralelo",
-    },
-    {
-      id: 2,
-      title: "Automatización Industrial con PLC",
-      description: "Aprende programación de PLCs y sistemas de automatización",
-      instructor: "Ing. Carlos Rodríguez",
-      category: "Automatización",
-      level: "Intermedio",
-      duration: "12 horas",
-      enrolled: true,
-      progress: 60,
-      rating: 4.9,
-      students: 198,
-      lessons: 36,
-      status: "published",
-      nextLesson: "Programación Ladder Avanzada",
-    },
-    {
-      id: 3,
-      title: "Instalaciones Solares Fotovoltaicas",
-      description: "Diseño e instalación de sistemas de energía solar",
-      instructor: "Ing. Roberto Silva",
-      category: "Energía Renovable",
-      level: "Avanzado",
-      duration: "15 horas",
-      enrolled: true,
-      progress: 40,
-      rating: 4.7,
-      students: 176,
-      lessons: 42,
-      status: "published",
-      nextLesson: "Cálculo de Dimensionamiento",
-    },
-    {
-      id: 4,
-      title: "Seguridad Eléctrica Industrial NOM",
-      description: "Normativas y protocolos de seguridad eléctrica",
-      instructor: "Ing. Ana Martínez",
-      category: "Seguridad",
-      level: "Básico",
-      duration: "6 horas",
-      enrolled: false,
-      rating: 4.9,
-      students: 312,
-      lessons: 18,
-      status: "published",
-    },
-    {
-      id: 5,
-      title: "Mantenimiento Preventivo Industrial",
-      description: "Técnicas y estrategias de mantenimiento preventivo",
-      instructor: "Ing. Luis Hernández",
-      category: "Mantenimiento",
-      level: "Intermedio",
-      duration: "10 horas",
-      enrolled: false,
-      rating: 4.6,
-      students: 189,
-      lessons: 30,
-      status: "published",
-    },
-    {
-      id: 6,
-      title: "Diseño de Instalaciones Eléctricas",
-      description: "Proyectos completos de instalaciones residenciales e industriales",
-      instructor: "Ing. María González",
-      category: "Electricidad",
-      level: "Avanzado",
-      duration: "14 horas",
-      enrolled: false,
-      rating: 4.8,
-      students: 156,
-      lessons: 38,
-      status: "published",
-    },
-    {
-      id: 7,
-      title: "Transformadores y Motores Eléctricos",
-      description: "Funcionamiento, instalación y mantenimiento de transformadores",
-      instructor: "Ing. Jorge Ramírez",
-      category: "Electricidad",
-      level: "Intermedio",
-      duration: "11 horas",
-      enrolled: false,
-      rating: 4.7,
-      students: 203,
-      lessons: 32,
-      status: "published",
-    },
-    {
-      id: 8,
-      title: "Energía Eólica: Fundamentos",
-      description: "Introducción a sistemas de generación eólica",
-      instructor: "Ing. Roberto Silva",
-      category: "Energía Renovable",
-      level: "Básico",
-      duration: "7 horas",
-      enrolled: false,
-      rating: 4.5,
-      students: 134,
-      lessons: 21,
-      status: "published",
-    },
-  ]
+  useEffect(() => {
+    const fetchCourses = async () => {
+      const [courses, enrolledList] = await Promise.all([
+        getAllCourses(),
+        getEnrolledCourses()
+      ])
+      
+      const enrolledIds = new Set(enrolledList.map(e => e.courseId))
+
+      const mappedCourses: Course[] = courses.map((c) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        instructor: c.instructor.name,
+        category: c.category,
+        level: c.level,
+        duration: c.duration,
+        enrolled: enrolledIds.has(c.id),
+        progress: enrolledList.find(e => e.courseId === c.id)?.progress || 0,
+        rating: c.rating,
+        students: c.students,
+        lessons: c.modules.reduce((acc, m) => acc + m.lessons.length, 0),
+        status: c.status as "published" | "draft",
+        nextLesson: enrolledList.find(e => e.courseId === c.id)?.nextLessonTitle,
+      }))
+      setAllCourses(mappedCourses)
+    }
+    fetchCourses()
+  }, [])
 
   const enrolledCourses = allCourses.filter((c) => c.enrolled)
 

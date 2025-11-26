@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSidebar } from "@/contexts/sidebar-context"
+import { logout } from "@/lib/actions"
 import {
   BookOpen,
   BarChart3,
@@ -165,7 +166,7 @@ export function DashboardSidebar() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => logout()}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Cerrar Sesión
                     </DropdownMenuItem>
@@ -205,10 +206,10 @@ export function DashboardSidebar() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar Sesión
-                  </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => logout()}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Cerrar Sesión
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
